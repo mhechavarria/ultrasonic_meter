@@ -23,7 +23,7 @@ LiquidCrystal lcd(35, 36, 37, 38, 39, 40);
 int trigPin = 3;    // Trigger
 int echoPin = 4;    // Echo
 //long duration, cm, buffer; 
-volatile long vSonido, Tamb;
+volatile double vSonido, Tamb;
 double distancia, distanciaFiltrada, duration, cm, buffer, promedio, distance;
 unsigned status;
 int i=0;//, promedio;
@@ -101,9 +101,11 @@ void lcd_print(){
     lcd.setCursor(0, 1);
     if(DECIMALES) lcd.print(promedio,1);
     else  lcd.print(round(promedio),1);
-    lcd.print(" cm - ");
-    lcd.print(Tamb);
-    lcd.print(" *C");
+    lcd.print(" cm-");
+    lcd.print(Tamb,1);
+    lcd.print(" ");
+    lcd.print((char) 223);
+    lcd.print("C");
 }
 
 double calc_distance (long T, double wave_duration) {
