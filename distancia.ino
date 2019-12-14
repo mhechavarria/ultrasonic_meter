@@ -20,21 +20,22 @@
 #include <Adafruit_BME280.h>
 
 #define SEALEVELPRESSURE_HPA (1013.25)
+#define DECIMALES 1 //1: Muestra una cifra decimal - 0: Muestra el número entero
 
 Adafruit_BME280 bme; // I2C
-OneMsTaskTimer_t myTask1 ={2000,  lcd_print, 0, 0};
+OneMsTaskTimer_t myTask1 ={1000,  lcd_print, 0, 0};
 
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(35, 36, 37, 38, 39, 40);
  
-int trigPin = 19;    // Trigger
-int echoPin = 18;    // Echo
-long duration, cm, buffer; 
+int trigPin = 3;    // Trigger
+int echoPin = 4;    // Echo
+//long duration, cm, buffer; 
 volatile long vSonido, Tamb;
-double distancia, distanciaFiltrada;
+double distancia, distanciaFiltrada, duration, cm, buffer, promedio;
 unsigned status;
-int i=0, promedio;
+int i=0;//, promedio;
 
 //Kalman miFiltro(0.125,32,1023,0);
 Kalman miFiltro(0.3,20,1023,0);
@@ -65,7 +66,7 @@ void setup() {
   lcd.setCursor(0, 1);
   lcd.print("     cm");
   lcd.setCursor(0, 1);
-  lcd.print(cm);
+  lcd.print(cm,1);
   
   OneMsTaskTimer::add(&myTask1);
   OneMsTaskTimer::start();
@@ -78,7 +79,7 @@ void loop() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(5);
   digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
+  delayMicroseconds(15);
   digitalWrite(trigPin, LOW);
  
   // Read the signal from the sensor: a HIGH pulse whose
@@ -104,13 +105,15 @@ void loop() {
   Serial.println();
   Serial.println();*/
   if(i==10){
+    double aux = 0;
     i=0;
-    promedio= round(buffer/10);
+    aux = buffer/10;
+    promedio = (double) round(aux*10)/10;
     buffer=0;
   }
   buffer += distanciaFiltrada;
   i++;
-  delay(5);
+  delay(10);
 }
 
 void lcd_print(){
@@ -118,7 +121,8 @@ void lcd_print(){
     lcd.clear();
     lcd.print("Distancia: ");      
     lcd.setCursor(0, 1);
-    lcd.print(round(promedio));
+    if(DECIMALES) lcd.print(promedio,1);
+    else  lcd.print(round(promedio),1);
     lcd.print(" cm - ");
     lcd.print(Tamb);
     lcd.print(" *C");
