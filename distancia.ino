@@ -20,7 +20,10 @@
 #include <Adafruit_BME280.h>
 
 #define SEALEVELPRESSURE_HPA (1013.25)
+
 #define DECIMALES 1 //1: Muestra una cifra decimal - 0: Muestra el número entero
+#define PLOT 1 //1: Enable - 0: Disable - If Enable, you can see in the serial plotter 3 things: Raw data of the distance, filtered distance with the Kalman filter and an average of the last 10 samples
+
 
 Adafruit_BME280 bme; // I2C
 OneMsTaskTimer_t myTask1 ={1000,  lcd_print, 0, 0};
@@ -33,7 +36,7 @@ int trigPin = 3;    // Trigger
 int echoPin = 4;    // Echo
 //long duration, cm, buffer; 
 volatile long vSonido, Tamb;
-double distancia, distanciaFiltrada, duration, cm, buffer, promedio;
+double distancia, distanciaFiltrada, duration, cm, buffer, promedio, distance;
 unsigned status;
 int i=0;//, promedio;
 
@@ -80,30 +83,16 @@ void loop() {
   delayMicroseconds(5);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(15);
-  digitalWrite(trigPin, LOW);
- 
+  digitalWrite(trigPin, LOW); 
   // Read the signal from the sensor: a HIGH pulse whose
   // duration is the time (in microseconds) from the sending
   // of the ping to the reception of its echo off of an object.
   pinMode(echoPin, INPUT);
   duration = pulseIn(echoPin, HIGH);
   Tamb = bme.readTemperature();
- 
-  // Convert the time into a distance
-  cm = ((duration * vSonido)/2)/10000;
-  distancia = (double) cm;
-  distanciaFiltrada = miFiltro.getFilteredValue(cm);
-  Serial.print(cm);
-  //Serial.print("cm");
-  //Serial.println();  
-  //Serial.print("Fitrada: ");
-  Serial.print(" ");
-  Serial.print(distanciaFiltrada);
-  Serial.print(" ");
-  Serial.println(promedio);
-  /*Serial.print("cm");
-  Serial.println();
-  Serial.println();*/
+  distance = calc_distance(Tamb, duration);
+  plotSerial();
+  
   if(i==10){
     double aux = 0;
     i=0;
@@ -126,5 +115,22 @@ void lcd_print(){
     lcd.print(" cm - ");
     lcd.print(Tamb);
     lcd.print(" *C");
-    
+}
+
+double calc_distance (long T, double wave_duration) {
+    // Convert the time into a distance
+  cm = ((duration * vSonido)/2)/10000;
+  distancia = (double) cm;
+  distanciaFiltrada = miFiltro.getFilteredValue(cm);
+  return distanciaFiltrada;
+}
+
+void plotSerial () {
+  if(PLOT){
+    Serial.print(cm);
+    Serial.print(" ");
+    Serial.print(distanciaFiltrada);
+    Serial.print(" ");
+    Serial.println(promedio);
+  }
 }
